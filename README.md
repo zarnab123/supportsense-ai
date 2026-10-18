@@ -69,3 +69,9 @@ supportsense-ai/
 ├── .github/workflows/ci.yml
 ├── requirements.txt
 └── README.md
+## Run the Streamlit dashboard
+
+After training the model, start the interactive dashboard:
+
+```bash
+streamlit run ui.py
