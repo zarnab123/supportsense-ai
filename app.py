@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from src.predict import confidence_label, suggest_priority
+from src.retriever import retrieve_guidance
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -13,8 +14,8 @@ MODEL_PATH = PROJECT_ROOT / "models" / "ticket_classifier.joblib"
 
 app = FastAPI(
     title="SupportSense AI API",
-    description="Banking customer-support ticket triage using machine learning.",
-    version="1.0.0",
+    description="Banking customer-support ticket triage using machine learning and RAG guidance.",
+    version="1.1.0",
 )
 
 
@@ -30,6 +31,9 @@ class TriageResponse(BaseModel):
     category: str
     priority: str
     confidence_indicator: str
+    recommended_policy: str
+    recommended_guidance: str
+    retrieval_similarity: float
     human_review_required: bool = True
 
 
@@ -71,9 +75,13 @@ def triage_ticket(ticket: TicketRequest):
     category = model.predict([clean_text])[0]
     priority = suggest_priority(clean_text, category)
     confidence = confidence_label(model, clean_text)
+    guidance = retrieve_guidance(clean_text)
 
     return TriageResponse(
         category=category,
         priority=priority,
         confidence_indicator=confidence,
+        recommended_policy=guidance["policy_title"],
+        recommended_guidance=guidance["guidance"],
+        retrieval_similarity=guidance["similarity_score"],
     )
